@@ -9,7 +9,7 @@ Redirect connections from different ports at one ipv4 address to unique random i
 - Ipv6 \64
 
 ## Installation
-[Video tutorial](https://xuanduong.carrd.co), VPS from [Vultr *50$ free*](https://www.vultr.com/?ref=8735464) used as Centos setup
+[Video tutorial](https://xuanduong.carrd.co), VPS from [Facebook *Admin*](https://www.facebook.com/dignile) used as Centos setup
 
 1. `bash <(curl -s "https://raw.githubusercontent.com/lexuanduongvip/ipv4-ipv6-proxy-master/main/scripts/install.sh")`
 
