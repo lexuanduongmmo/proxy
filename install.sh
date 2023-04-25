@@ -64,10 +64,7 @@ install_3proxy() {
     echo "net.ipv4.netfilter.ip_conntrack_buckets = 327680" >> /etc/sysctl.conf 
     echo "net.netfilter.nf_conntrack_buckets = 327680" >> /etc/sysctl.conf 
     echo "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established = 600" >> /etc/sysctl.conf 
-    echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600" >> /etc/sysctl.conf 
-    echo "net.ipv6.conf.all.enable_ipv6 = 1" >> /etc/sysctl.conf 
-    echo "net.ipv6.conf.default.enable_ipv6 = 1" >> /etc/sysctl.conf 
-    echo "net.ipv6.conf.lo.enable_ipv6 = 1" >> /etc/sysctl.conf 
+    echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600" >> /etc/sysctl.conf     
     echo "net.ipv4.tcp_synack_retries = 3" >> /etc/sysctl.conf 
     echo "net.ipv4.tcp_syn_retries = 3" >> /etc/sysctl.conf 
     sysctl -p
