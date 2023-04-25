@@ -70,7 +70,6 @@ install_3proxy() {
     echo "net.ipv6.conf.lo.enable_ipv6 = 1" >> /etc/sysctl.conf 
     echo "net.ipv4.tcp_synack_retries = 3" >> /etc/sysctl.conf 
     echo "net.ipv4.tcp_syn_retries = 3" >> /etc/sysctl.conf 
-    echo 327680 > /sys/module/nf_conntrack/parameters/hashsize
     sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
