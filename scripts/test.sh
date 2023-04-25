@@ -13,7 +13,7 @@ gen64() {
 }
 install_3proxy() {
     echo "installing 3proxy"
-    URL="https://raw.githubusercontent.com/tomdzpro/proxyv6/main/3proxy-3proxy-0.8.6.tar.gz"
+    URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
     make -f Makefile.Linux
@@ -22,7 +22,9 @@ install_3proxy() {
     cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
     chmod +x /etc/init.d/3proxy
     chkconfig 3proxy on
-     systemctl enable 3proxy
+     systemctl link /usr/lib/systemd/system/3proxy.service
+    systemctl daemon-reload
+#    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
     echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
@@ -37,7 +39,7 @@ install_3proxy() {
     cd $WORKDIR
 }
 
-en_3proxy() {
+gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
@@ -52,7 +54,9 @@ setuid 65535
 stacksize 6291456 
 flush
 auth strong
+
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
+
 $(awk -F "/" '{print "auth strong\n" \
 "allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
@@ -60,7 +64,7 @@ $(awk -F "/" '{print "auth strong\n" \
 EOF
 }
 
-en_proxy_file_for_user() {
+gen_proxy_file_for_user() {
     cat >proxy.txt <<EOF
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
