@@ -72,11 +72,8 @@ install_3proxy() {
     echo "net.ipv4.tcp_syn_retries = 3" >> /etc/sysctl.conf 
     echo 327680 > /sys/module/nf_conntrack/parameters/hashsize
     sysctl -p
-    sysctl -p /etc/sysctl.d/99-network-tuning.conf
     systemctl stop firewalld
     systemctl disable firewalld
-    systemctl enable firewalld
-    systemctl restart firewalld
 
     cd $WORKDIR
 }
@@ -94,9 +91,6 @@ timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
 stacksize 6291456
-parent 1000 http ipv6 85
-proxy -p81 -a -6 -iipv4 -eipv6
-auth iponly
 flush
 auth strong
 
