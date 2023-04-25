@@ -17,14 +17,14 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz"
+    URL="https://raw.githubusercontent.com/handisaa/proxyv6/main/3proxy-3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
+    cd 3proxy-0.8.6
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/lexuanduongvip/ipv4-ipv6-proxy-master/main/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
+    mv /3proxy/3proxy-0..8.6/bin/3proxy /usr/local/etc/3proxy/bin/
+    wget https://raw.githubusercontent.com/lexuanduongvip/ipv4-ipv6-proxy-master/main/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.8.6/scripts/3proxy.service2
+    cp /3proxy/3proxy-0.8.6/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
 #    systemctl enable 3proxy
@@ -45,11 +45,11 @@ install_3proxy() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 2000
+maxconn 3000
 nserver 1.1.1.1
-nserver 8.8.4.4
-nserver 2001:4860:4860::8888
-nserver 2001:4860:4860::8844
+nserver 9.9.9.9
+nserver 2001:4860:4860::1111
+nserver 2001:4860:4860::9999
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
