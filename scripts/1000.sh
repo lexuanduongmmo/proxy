@@ -1,3 +1,4 @@
+#!/bin/sh
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
@@ -73,9 +74,10 @@ EOF
 }
 
 upload_proxy() {
+    cd $WORKDIR
     local PASS=$(random)
-    zip --password $PASS /home/proxy-installer/proxy.zip /home/proxy-installer/proxy.txt
-    #URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
+    zip --password $PASS proxy.zip proxy.txt
+    URL=$(curl -F "file=@proxy.zip" https://file.io)
 
     echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
     echo "Download zip archive from: ${URL}"
@@ -84,7 +86,7 @@ upload_proxy() {
 }
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "usr$(random)/pass$(random)/$IP4/$port/$(gen64 $IP6)"
+        echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
@@ -96,7 +98,7 @@ EOF
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig ens3 inet6 add " $5 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 echo "installing apps"
