@@ -24,9 +24,9 @@ install_3proxy() {
   cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
   chmod +x /etc/init.d/3proxy
   chkconfig 3proxy on
-    systectl enable 3proxy
-    systeml start 3proxy
-    systemlctl status 3proxy
+    systectl enable 3proxy.service
+    systeml start 3proxy.service
+    systemlctl status 3proxy.service
     systemctl daemon-reload
 #   systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
