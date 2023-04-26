@@ -26,24 +26,24 @@ cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.s
 systemctl link /usr/lib/systemd/system/3proxy.service
 systemctl daemon-reload
 #    systemctl enable 3proxy
-    echo "* hard nofile 999999" >>  /etc/security/limits.conf
-    echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.enp1s0.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
-    systemctl stop firewalld
-    systemctl disable firewalld
+echo "* hard nofile 999999" >>  /etc/security/limits.conf
+echo "* soft nofile 999999" >>  /etc/security/limits.conf
+echo "net.ipv6.conf.enp1s0.proxy_ndp=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
+sysctl -p
+systemctl stop firewalld
+systemctl disable firewalld
 
-    cd $WORKDIR
+cd $WORKDIR
 }
 
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 2000
+maxconn 20000
 nserver 1.1.1.1
 nserver 8.8.4.4
 nserver 2001:4860:4860::8888
@@ -54,10 +54,8 @@ setgid 65535
 setuid 65535
 stacksize 6291456 
 flush
-auth strong
-users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
-$(awk -F "/" '{print "auth strong\n" \
-"allow " $1 "\n" \
+auth none
+$(awk -F "/" '{print "auth none\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
 "flush\n"}' ${WORKDATA})
 EOF
@@ -69,10 +67,9 @@ $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
 
-
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "//$IP4/$port/$(gen64 $IP6)"
+        echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
@@ -103,8 +100,11 @@ IP6=2001:4860:4860::8888
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=11000
-LAST_PORT=11500
+#Note Start Port
+FIRST_PORT=10000
+#Note End Port
+LAST_PORT=20000
+
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
