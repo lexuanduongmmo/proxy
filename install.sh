@@ -1,4 +1,18 @@
 #!/bin/sh
+
+check_nodejs_install(){
+    if ! node -v
+    then
+		curl -sL https://rpm.nodesource.com/setup_12.x | sudo bash -
+        sudo yum install -y nodejs
+        sudo yum install -y gcc-c++ make
+        sudo npm install -g yarn
+        Sudo yum install gcc net-tools bsdtar zip >/dev/null
+    else
+        echo "nodejs installed"
+    fi
+}
+
 random() {
 	tr </dev/urandom -dc A-Za-z0-9 | head -c5
 	echo
@@ -33,40 +47,6 @@ install_3proxy() {
     echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    echo "net.core.somaxconn = 50000" >> /etc/sysctl.conf
-    echo "net.ipv4.tcp_max_syn_backlog = 30000" >> /etc/sysctl.conf
-    echo "net.core.netdev_max_backlog = 5000" >> /etc/sysctl.conf
-    echo "net.ipv4.ip_local_port_range = 13000 65535" >> /etc/sysctl.conf 
-    echo "net.ipv4.udp_rmem_min = 8192" >> /etc/sysctl.conf 
-    echo "net.ipv4.udp_wmem_min = 8192" >> /etc/sysctl.conf 
-    echo "net.ipv4.conf.all.send_redirects = 0" >> /etc/sysctl.conf 
-    echo "net.ipv4.conf.all.accept_redirects = 0" >> /etc/sysctl.conf 
-    echo "net.ipv4.conf.all.accept_source_route = 0" >> /etc/sysctl.conf 
-    echo "net.ipv4.ip_forward = 0" >> /etc/sysctl.conf 
-    echo "net.ipv6.conf.all.forwarding = 0" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_slow_start_after_idle = 0" >> /etc/sysctl.conf 
-    echo "net.core.rmem_max = 16777216" >> /etc/sysctl.conf 
-    echo "net.core.wmem_max = 16777216" >> /etc/sysctl.conf 
-    echo "net.core.rmem_default = 16777216" >> /etc/sysctl.conf 
-    echo "net.core.wmem_default = 16777216" >> /etc/sysctl.conf 
-    echo "net.core.optmem_max = 40960" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_rmem = 4096 87380 16777216" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_wmem = 4096 65536 16777216" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_keepalive_time = 60" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_max_tw_buckets = 2000000" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_fin_timeout = 10" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_tw_reuse = 1" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_tw_recycle = 0" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_keepalive_intvl = 15" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_keepalive_probes = 5" >> /etc/sysctl.conf 
-    echo "net.ipv4.netfilter.ip_conntrack_max = 655360" >> /etc/sysctl.conf 
-    echo " net.netfilter.nf_conntrack_max = 655360" >> /etc/sysctl.conf 
-    echo "net.ipv4.netfilter.ip_conntrack_buckets = 327680" >> /etc/sysctl.conf 
-    echo "net.netfilter.nf_conntrack_buckets = 327680" >> /etc/sysctl.conf 
-    echo "net.ipv4.netfilter.ip_conntrack_tcp_timeout_established = 600" >> /etc/sysctl.conf 
-    echo "net.netfilter.nf_conntrack_tcp_timeout_established = 600" >> /etc/sysctl.conf     
-    echo "net.ipv4.tcp_synack_retries = 3" >> /etc/sysctl.conf 
-    echo "net.ipv4.tcp_syn_retries = 3" >> /etc/sysctl.conf 
     sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
@@ -78,20 +58,18 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
-nserver 208.67.222.222
-nserver 208.67.220.220
+nserver 1.1.1.1
+nserver 8.8.4.4
 nserver 2001:4860:4860::8888
 nserver 2001:4860:4860::8844
-nscache 65536
+nscache 99999
 timeouts 1 5 30 60 180 1800 15 60
-setgid 65535
-setuid 65535
-stacksize 6291456
+setgid 99999
+setuid 99999
+stacksize 6291456 
 flush
 auth strong
-
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
-
 $(awk -F "/" '{print "auth strong\n" \
 "allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
@@ -148,8 +126,11 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=10000
-LAST_PORT=11000
+echo "How many proxy do you want to create? Example 1000"
+read COUNT
+
+FIRST_PORT=11000
+LAST_PORT=11500
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
@@ -162,7 +143,7 @@ systemctl start NetworkManager.service
 ifup ens3
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
+ulimit -n 99999
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
 EOF
 
