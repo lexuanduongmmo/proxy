@@ -6,10 +6,10 @@ random() {
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 gen64() {
-  ip64() {
-    echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+  ip65() {
+    echo "${array[$RANDOM % 32]}${array[$RANDOM % 32]}${array[$RANDOM % 32]}${array[$RANDOM % 32]}"
   }
-  echo "$1:$(ip64):$(ip64):$(ip64):$(ip64):$(ip64)"
+  echo "$1:$(ip65):$(ip65):$(ip65):$(ip65):$(ip65)"
 }
 install_3proxy() {
 echo "installing 3proxy"
