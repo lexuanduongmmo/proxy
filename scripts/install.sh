@@ -5,7 +5,7 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 1.1.1.1 | awk -- '{printf $5}')
+main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 
 gen64() {
 	ip64() {
@@ -134,7 +134,7 @@ systemctl start NetworkManager.service
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
 ulimit -n 99999
-/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg & /bin/kill `/usr/bin/pgrep -u proxy3`
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
 RemainAfterExit=yes
 Restart=on-failure
 EOF
