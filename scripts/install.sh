@@ -55,8 +55,8 @@ nserver 1.1.1.1
 nserver 1.0.0.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-setgid 65535
-setuid 65535
+setgid 99999
+setuid 99999
 stacksize 6291456 
 flush
 auth strong
@@ -135,7 +135,7 @@ systemctl start NetworkManager.service
 # ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
+ulimit -n 99999
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg & /bin/kill `/usr/bin/pgrep -u proxy3`
 RemainAfterExit=yes
 Restart=on-failure
