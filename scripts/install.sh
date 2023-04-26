@@ -14,23 +14,21 @@ gen64() {
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 install_3proxy() {
-    echo "installing 3proxy"
-    mkdir -p /3proxy
-    cd /3proxy
-    URL="https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz"
-    wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
-    make -f Makefile.Linux
-    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/lexuanduongvip/ipv4-ipv6-proxy-master/main/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
-    systemctl link /usr/lib/systemd/system/3proxy.service
-    systectl enable 3proxy.service
-    systeml start 3proxy.service
-    systemlctl status 3proxy.service
+  echo "installing 3proxy"
+  URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
+  wget -qO- $URL | bsdtar -xvf-
+  cd 3proxy-3proxy-0.8.6
+  make -f Makefile.Linux
+  mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
+  cp src/3proxy /usr/local/etc/3proxy/bin/
+  cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
+  chmod +x /etc/init.d/3proxy
+  chkconfig 3proxy on
+    systectl enable 3proxy
+    systeml start 3proxy
+    systemlctl status 3proxy
     systemctl daemon-reload
-#    systemctl enable 3proxy
+#   systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
     echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
