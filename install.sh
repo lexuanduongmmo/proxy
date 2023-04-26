@@ -1,29 +1,15 @@
 #!/bin/sh
-
-check_nodejs_install(){
-    if ! node -v
-    then
-		curl -sL https://rpm.nodesource.com/setup_12.x | sudo bash -
-        sudo yum install -y nodejs
-        sudo yum install -y gcc-c++ make
-        sudo npm install -g yarn
-        Sudo yum install gcc net-tools bsdtar zip >/dev/null
-    else
-        echo "nodejs installed"
-    fi
-}
-
 random() {
-	tr </dev/urandom -dc A-Za-z0-9 | head -c5
-	echo
+  tr </dev/urandom -dc A-Za-z0-9 | head -c5
+  echo
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
 gen64() {
-	ip64() {
-		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
+  ip64() {
+    echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+  }
+  echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 install_3proxy() {
     echo "installing 3proxy"
