@@ -5,8 +5,6 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
-
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -14,19 +12,23 @@ gen64() {
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 install_3proxy() {
-  echo "installing 3proxy"
-  URL="https://github.com/z3APA3A/3proxy/archive/0.8.12.tar.gz"
-  tar xzf 0.8.12.tar.gz
-cd 3proxy-0.8.12
-make -f Makefile.Linux
-cd src
-mkdir /etc/3proxy/
-mv 3proxy /etc/3proxy/
-cd /etc/3proxy/
-#   systemctl enable 3proxy
+    echo "installing 3proxy"
+    mkdir -p /3proxy
+    cd /3proxy
+    URL="https://github.com/z3APA3A/3proxy/archive/0.9.3.tar.gz"
+    wget -qO- $URL | bsdtar -xvf-
+    cd 3proxy-0.9.3
+    make -f Makefile.Linux
+    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
+    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
+    wget https://raw.githubusercontent.com/xlandgroup/ipv4-ipv6-proxy/master/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
+    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
+    systemctl link /usr/lib/systemd/system/3proxy.service
+    systemctl daemon-reload
+#    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.ens3.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
@@ -42,18 +44,18 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
-nserver 8.8.8.8
-nserver 8.8.4.4
-nserver 1.1.1.1
-nserver 1.0.0.1
+nserver 77.88.8.7
+nserver 77.88.8.3
+nserver 2a02:6b8::feed:a11
+nserver 2a02:6b8:0:1::feed:a11
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-setgid 65536
-setuid 65536
-stacksize 65536 
+setgid 65535
+setuid 65535
+stacksize 6291456 
+flush
 auth strong
 deny * * 127.0.0.1
-flush
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
