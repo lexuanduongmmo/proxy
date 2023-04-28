@@ -15,19 +15,14 @@ gen64() {
 }
 install_3proxy() {
   echo "installing 3proxy"
-  URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
-  wget -qO- $URL | bsdtar -xvf-
-  cd 3proxy-3proxy-0.8.6
-  make -f Makefile.Linux
-  mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-  cp src/3proxy /usr/local/etc/3proxy/bin/
-  cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
-  chmod +x /etc/init.d/3proxy
-  chkconfig 3proxy on
-    systectl enable 3proxy.service
-    systeml start 3proxy.service
-    systemlctl status 3proxy.service
-    systemctl daemon-reload
+  URL="https://github.com/z3APA3A/3proxy/archive/0.8.12.tar.gz"
+  tar xzf 0.8.12.tar.gz
+cd 3proxy-0.8.12
+make -f Makefile.Linux
+cd src
+mkdir /etc/3proxy/
+mv 3proxy /etc/3proxy/
+cd /etc/3proxy/
 #   systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
@@ -46,18 +41,19 @@ install_3proxy() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 3000
+maxconn 2000
 nserver 8.8.8.8
 nserver 8.8.4.4
 nserver 1.1.1.1
 nserver 1.0.0.1
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
-setgid 99999
-setuid 99999
-stacksize 6291456 
-flush
+setgid 65536
+setuid 65536
+stacksize 65536 
 auth strong
+deny * * 127.0.0.1
+flush
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
@@ -117,8 +113,8 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=4000
-LAST_PORT=5000
+FIRST_PORT=3000
+LAST_PORT=4000
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
