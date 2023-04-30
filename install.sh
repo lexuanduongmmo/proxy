@@ -12,10 +12,10 @@ gen64() {
     echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 install_3proxy() {
-    version=0.9.3
+    version=0.9.4
     apt-get update && apt-get -y upgrade
     apt-get install gcc make git -y
-    wget --no-check-certificate -O 3proxy-${version}.tar.gz https://github.com/Thanhan0901/install-proxy-v6/raw/main/3proxy-0.9.3.tar.gz
+    wget --no-check-certificate -O 3proxy-${version}.tar.gz https://github.com/3proxy/3proxy/archive/refs/tags/0.9.4.tar.gz
     tar xzf 3proxy-${version}.tar.gz
     cd 3proxy-${version}
     make -f Makefile.Linux
@@ -24,7 +24,7 @@ install_3proxy() {
     mv 3proxy /etc/3proxy/
     cd /etc/3proxy/
     wget --no-check-certificate https://github.com/SnoyIatk/3proxy/raw/master/3proxy.cfg
-    chmod 1000 /etc/3proxy/3proxy.cfg
+    chmod 600 /etc/3proxy/3proxy.cfg
     mkdir /var/log/3proxy/
     cd /etc/init.d/
     wget --no-check-certificate  https://raw.github.com/SnoyIatk/3proxy/master/3proxy
@@ -37,6 +37,7 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
+na
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
@@ -112,7 +113,7 @@ gen_ifconfig >$WORKDIR/boot_ifconfig.sh
 chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
 
 gen_3proxy >/etc/3proxy/3proxy.cfg
-ulimit -S -n 4096
+ulimit -S -n 65535
 /etc/init.d/3proxy start
 
 gen_proxy_file_for_user
