@@ -10,6 +10,7 @@ main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+		if [[ "\$mask" = "64" && "\$mask" = "48" && "\$mask" = "32" ]]; then
 	}
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
@@ -35,7 +36,43 @@ install_3proxy() {
     echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
+    echo "net.ipv6.conf.eth0.proxy_ndp=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+   echo "net.ipv6.ip_nonlocal_bind=1" >> /etc/sysctl.conf
+   echo "vm.max_map_count=195120" >> /etc/sysctl.conf
+   echo "kernel.pid_max=195120" >> /etc/sysctl.conf
+   echo "net.ipv4.ip_local_port_range=1024 65000" >> /etc/sysctl.conf
+   echo -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net}2 peer ${base_net}1 dev eth0" >> /etc/rc.local
+echo "sleep 5" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net}1 dev eth0" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.local
+echo -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net}2 peer ${base_net}1 dev eth0" >> /etc/rc.local
+echo "sleep 5" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net}1 dev eth0" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.localecho -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net1}2/64 dev eth0" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net1}1" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.local
+ sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
 
@@ -48,8 +85,8 @@ daemon
 maxconn 2000
 nserver 1.1.1.1
 nserver 8.8.4.4
-nserver 2001:4860:4860::8888
-nserver 2001:4860:4860::8844
+nserver 2001:678:974:3::/64
+nserver 2001:678:974:2::/64
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
