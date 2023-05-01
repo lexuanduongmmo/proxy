@@ -5,9 +5,12 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+main_interface=$(ip route get (ipv64) | awk -- '{printf $5}')
+
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+		if [[ "\$mask" = "64" && "\$mask" = "48" && "\$mask" = "32" ]]; then
 	}
 	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
@@ -21,19 +24,55 @@ install_3proxy() {
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/xlandgroup/ipv4-ipv6-proxy/master/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
+    wget https://raw.githubusercontent.com/lexuanduongvip/ipv4-ipv6-proxy-master/main/scripts/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
     cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
 #    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.ens3.proxy_ndp=1" >> /etc/sysctl.conf
+    echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
     echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
+    echo "net.ipv6.conf.eth0.proxy_ndp=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
+   echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+   echo "net.ipv6.ip_nonlocal_bind=1" >> /etc/sysctl.conf
+   echo "vm.max_map_count=195120" >> /etc/sysctl.conf
+   echo "kernel.pid_max=195120" >> /etc/sysctl.conf
+   echo "net.ipv4.ip_local_port_range=1024 65000" >> /etc/sysctl.conf
+   echo -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net}2 peer ${base_net}1 dev eth0" >> /etc/rc.local
+echo "sleep 5" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net}1 dev eth0" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.local
+echo -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net}2 peer ${base_net}1 dev eth0" >> /etc/rc.local
+echo "sleep 5" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net}1 dev eth0" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.localecho -e '#!/bin/bash \n'  >> /etc/rc.local
+echo "ulimit -n 600000" >> /etc/rc.local
+echo "ulimit -u 600000" >> /etc/rc.local
+echo "ulimit -i 20000" >> /etc/rc.local
+echo "ip -6 addr add ${base_net1}2/64 dev eth0" >> /etc/rc.local
+echo "ip -6 route add default via ${base_net1}1" >> /etc/rc.local
+echo "ip -6 route add local ${base_net}/${mask} dev lo" >> /etc/rc.local
+echo "/root/ndppd/ndppd -d -c /root/ndppd/ndppd.conf" >> /etc/rc.local
+echo -e "\nexit 0\n" >> /etc/rc.local
+ sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
 
@@ -44,10 +83,10 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
-nserver 77.88.8.7
-nserver 77.88.8.3
-nserver 2a02:6b8::feed:a11
-nserver 2a02:6b8:0:1::feed:a11
+nserver 1.1.1.1
+nserver 8.8.4.4
+nserver 2001:678:974:3::/64
+nserver 2001:678:974:2::/64
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
@@ -55,7 +94,6 @@ setuid 65535
 stacksize 6291456 
 flush
 auth strong
-deny * * 127.0.0.1
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
@@ -115,8 +153,8 @@ IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
-FIRST_PORT=3000
-LAST_PORT=4000
+FIRST_PORT=10000
+LAST_PORT=12000
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
@@ -131,13 +169,8 @@ systemctl start NetworkManager.service
 # ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65536
+ulimit -n 65535
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
-RemainAfterExit=yes
-Restart=on-failure
-EOF
-
-WantedBy=multi-user.target
 EOF
 
 bash /etc/rc.local
@@ -145,6 +178,3 @@ bash /etc/rc.local
 gen_proxy_file_for_user
 
 upload_proxy
-
-systemctl restart 3proxy
-systemctl enable 3proxy
