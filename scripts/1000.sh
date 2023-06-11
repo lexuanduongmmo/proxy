@@ -111,8 +111,8 @@ WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
-IPV4=$(curl -SsL ipv4.icanhazip.com)
-IPV6=$(curl -SsL ipv6.icanhazip.com) | cut -f1-4 -d':')
+IPV4=$(curl -4 -SsL ipv4.icanhazip.com)
+IPV6=$(curl -6 -SsL ipv6.icanhazip.com) | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
