@@ -16,13 +16,13 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21110&authkey=!AJKk3y_O_e-H9f4"
+    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21135"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-0.9.4
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21111&authkey=!AKshcg-fWqI6rnY --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
+    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21134 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
     cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
