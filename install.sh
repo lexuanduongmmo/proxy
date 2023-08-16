@@ -48,7 +48,7 @@ maxconn 2000
 nserver 149.112.112.11
 nserver 195.46.39.40
 nserver 2606:4700:4700::1111
-nserver 2001:67c:2778::3940
+nserver 2001:4860:4860::8888
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
