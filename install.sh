@@ -16,13 +16,13 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21135"
+    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21135&authkey=!AA9AaWtAl0yTalY"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-0.9.4
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21134 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
+    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21134&authkey=!AEJoKh3BHnk9IVI --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
     cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
@@ -47,20 +47,25 @@ daemon
 maxconn 2000
 nserver 1.1.1.1
 nserver 8.8.8.8
-nserver 2606:4700:4700::1111
 nserver 2001:4860:4860::8888
+nserver 2001:4860:4860::8844
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
 stacksize 6291456
-fflush
-$(awk -F "/" '{print "\n" \
-"" $1 "\n" \
+flush
+auth none
+
+users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
+
+$(awk -F "/" '{print "auth none\n" \
+"allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
 "flush\n"}' ${WORKDATA})
 EOF
 }
+
 gen_proxy_file_for_user() {
     cat >proxy.txt <<EOF
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
@@ -70,12 +75,10 @@ EOF
 upload_proxy() {
     cd $WORKDIR
     local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -F "file=@proxy.zip" https://file.io)
-
-    echo "Proxy is ready! Format IP:PORT"
+    zip ${IP4}.zip proxy.txt
+    URL=$(curl -F "file=@${IP4}.zip" https://file.io)
     echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
+
 
 }
 gen_data() {
@@ -133,5 +136,5 @@ EOF
 bash /etc/rc.local
 
 gen_proxy_file_for_user
-rm -rf /root/3proxy-3proxy-0.9.4
+
 upload_proxy
