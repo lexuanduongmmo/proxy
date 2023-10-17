@@ -45,8 +45,8 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
-nserver 149.112.112.11
-nserver 195.46.39.40
+nserver 1.1.1.1
+nserver 8.8.8.8
 nserver 2606:4700:4700::1111
 nserver 2001:4860:4860::8888
 nscache 65536
@@ -54,18 +54,13 @@ timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
 stacksize 6291456
-flush
-auth none
-
-users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
-
-$(awk -F "/" '{print "auth none\n" \
-"allow " $1 "\n" \
+fflush
+$(awk -F "/" '{print "\n" \
+"" $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
 "flush\n"}' ${WORKDATA})
 EOF
 }
-
 gen_proxy_file_for_user() {
     cat >proxy.txt <<EOF
 $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
@@ -75,10 +70,12 @@ EOF
 upload_proxy() {
     cd $WORKDIR
     local PASS=$(random)
-    zip ${IP4}.zip proxy.txt
-    URL=$(curl -F "file=@${IP4}.zip" https://file.io)
-    echo "Download zip archive from: ${URL}"
+    zip --password $PASS proxy.zip proxy.txt
+    URL=$(curl -F "file=@proxy.zip" https://file.io)
 
+    echo "Proxy is ready! Format IP:PORT"
+    echo "Download zip archive from: ${URL}"
+    echo "Password: ${PASS}"
 
 }
 gen_data() {
@@ -136,5 +133,5 @@ EOF
 bash /etc/rc.local
 
 gen_proxy_file_for_user
-
+rm -rf /root/3proxy-3proxy-0.9.4
 upload_proxy
