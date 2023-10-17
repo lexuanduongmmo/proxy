@@ -16,14 +16,14 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21107&authkey=!AOkZC8UhvwOij2s"
+    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21135"
     wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
+    cd 3proxy-0.9.4
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.3/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://it4.vn/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.3/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.3/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
+    mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
+    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21134 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
+    cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
     systemctl enable 3proxy
@@ -45,8 +45,8 @@ gen_3proxy() {
     cat <<EOF
 daemon
 maxconn 2000
-nserver 149.112.112.112
-nserver 195.46.39.39
+nserver 1.1.1.1
+nserver 8.8.8.8
 nserver 2001:4860:4860::8888
 nserver 2001:4860:4860::8844
 nscache 65536
