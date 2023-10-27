@@ -1,140 +1,333 @@
-#!/bin/sh
-random() {
-	tr </dev/urandom -dc A-Za-z0-9 | head -c5
-	echo
+#!/usr/local/bin/bash
+gen_ipv6_64() {
+	#Backup File
+	rm $WORKDIR/ipv6.txt
+	count_ipv6=1
+	while [ "$count_ipv6" -le $MAXCOUNT ]
+	do
+		array=( 1 2 3 4 5 6 7 8 9 0 a b c d e f )
+		ip64() {
+			echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+		}
+		echo $IP6:$(ip64):$(ip64):$(ip64):$(ip64) >> $WORKDIR/ipv6.txt
+		let "count_ipv6 += 1"
+	done
 }
 
-array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
-gen64() {
-	ip64() {
-		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
-}
 install_3proxy() {
     echo "installing 3proxy"
-    mkdir -p /3proxy
-    cd /3proxy
-    URL="https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21135&authkey=!AA9AaWtAl0yTalY"
-    wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.4
-    make -f Makefile.Linux
-    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://onedrive.live.com/download?resid=6AF1B4EAE909B02A%21134&authkey=!AEJoKh3BHnk9IVI --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
-    cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
-    systemctl link /usr/lib/systemd/system/3proxy.service
+    sudo yum install gcc make nano git -y
+    git clone https://github.com/z3apa3a/3proxy
+    cd 3proxy
+    ln -s Makefile.Linux Makefile
+    make
+    sudo make install
     systemctl daemon-reload
-    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
-    echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.proxy_ndp=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.default.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
-    echo "net.ipv6.ip_nonlocal_bind = 1" >> /etc/sysctl.conf
-    sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
-
+    ulimit -n 65535
+    chkconfig 3proxy on
     cd $WORKDIR
 }
 
-gen_3proxy() {
-    cat <<EOF
-daemon
-maxconn 2000
-nserver 1.1.1.1
-nserver 8.8.8.8
-nserver 2001:4860:4860::8888
-nserver 2001:4860:4860::8844
-nscache 65536
-timeouts 1 5 30 60 180 1800 15 60
-setgid 65535
-setuid 65535
-stacksize 6291456
-flush
-auth none
-
-users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
-
-$(awk -F "/" '{print "auth none\n" \
-"allow " $1 "\n" \
-"proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
-"flush\n"}' ${WORKDATA})
-EOF
-}
-
-gen_proxy_file_for_user() {
-    cat >proxy.txt <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
-EOF
-}
-
-upload_proxy() {
-    cd $WORKDIR
-    local PASS=$(random)
-    zip ${IP4}.zip proxy.txt
-    URL=$(curl -F "file=@${IP4}.zip" https://file.io)
-    echo "Download zip archive from: ${URL}"
-
-
-}
-gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6)"
-    done
+gen_3proxy_cfg() {
+	echo daemon
+	#echo log /root/3proxy.log
+	#echo 'logformat "- +_L%t.%. %N.%p %E %U %C:%c %R:%r %O %I %h %T"'
+	#echo rotate 5
+	echo maxconn 3000
+	echo nserver 1.1.1.1
+	echo nserver [2606:4700:4700::1111]
+	echo nserver [2606:4700:4700::1001]
+	echo nserver [2001:4860:4860::8888]
+	echo nscache 65536
+	echo timeouts 1 5 30 60 180 1800 15 60
+	echo setgid 65535
+	echo setuid 65535
+	echo stacksize 6291456 
+	echo flush
+	echo authcache user 86400
+	echo auth strong cache
+	echo users $userpr:CL:$passpr
+	echo allow $userpr
+	
+	port=$START_PORT
+	while read ip; do
+		echo "proxy -6 -n -a -p$port -i$IP4 -e$ip"
+		((port+=1))
+	done < $WORKDIR/ipv6.txt
+	
 }
 
 gen_iptables() {
-    cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA})
-EOF
+	port=$START_PORT
+	for ((i=1; i<=$MAXCOUNT; i++)); do
+		echo "iptables -I INPUT -p tcp --dport $port -m state --state NEW -j ACCEPT"
+		((port+=1))
+	done
 }
+
 
 gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig '$main_interface' inet6 add " $5 "/64"}' ${WORKDATA})
+	while read line; do    
+		echo "ifconfig $IFCFG inet6 add $line/64"
+	done < $WORKDIR/ipv6.txt
+}
+
+export_txt(){
+	port=$PORTPROXY
+	for ((i=1; i<=$MAXCOUNT; i++)); do
+		echo "$IP4:$port:$userpr:$passpr"
+		((port+=1))
+	done
+}
+
+
+if [ "x$(id -u)" != 'x0' ]; then
+    echo 'Error: this script can only be executed by root'
+    exit 1
+fi
+#
+install_3proxy
+#service network restart
+systemctl stop firewalld
+ulimit -n 65535
+yum -y install gcc net-tools bsdtar zip psmisc wget >/dev/null
+#mkdir -p ~/.ssh
+#wget https://bom.so/RN5P5s
+#
+echo "Kiểm tra kết nối IPv6 ..."
+
+
+if ping6 -c3 icanhazip.com &> /dev/null
+then
+	IP4=$(curl ifconfig.me)
+	IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+	IP4="$IP4"
+	IP6="$IP6"
+	main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
+	main_interface="$main_interface"
+	
+    echo "[OKE]: Thành công"
+    	echo "IPV4: $IP4"
+	echo "IPV6: $IP6"
+	echo "Mạng chính: $main_interface"
+else
+    echo "[ERROR]:  thất bại!"
+	exit 1
+fi
+
+IFCFG="$main_interface" 
+WORKDIR="/root"
+echo "Proxy bắt đầu từ Port? vd: 20000"
+read portproxy
+echo "Nhập số lượng proxy? Ví dụ: 500"
+read XCOUNT
+START_PORT=$PORTPROXY
+MAXCOUNT=$XCOUNT
+XUSER=$userpr
+XPASS=$passpr
+PORTPROXY=$portproxy
+#
+echo "Đang tạo $MAXCOUNT IPV6 > ipv6.txt"
+gen_ipv6_64
+
+#
+echo "Đang tạo IPV6 gen_ifconfig.sh"
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+bash $WORKDIR/boot_ifconfig.sh
+
+#
+echo "Đang khởi tạo boot_iptables.sh"
+
+systemctl disable --now firewalld
+service iptables stop
+gen_iptables >$WORKDIR/boot_iptables.sh
+bash $WORKDIR/boot_iptables.sh
+
+#
+echo "3proxy Start"
+gen_3proxy_cfg > /etc/3proxy/3proxy.cfg
+killall 3proxy
+service 3proxy start
+#
+echo "Export $IP4.txt"
+export_txt > $IP4.txt
+# upfile
+
+
+upload_proxy() {
+    URL=$(curl -s --upload-file $IP4.txt https://transfer.sh/$IP4.txt)
+
+    echo "Tạo Proxy thành công! Định dạng IP:PORT:LOGIN:PASS"
+    echo "Tải Proxy tại: ${URL}"
+
+}
+upload_proxy
+
+
+xoay_proxy() {
+cat > xoay.sh << "EOF"
+#!/usr/bin/bash
+gen_ipv6_64() {
+	#Backup File
+	rm $WORKDIR/ipv6.txt
+	count_ipv6=1
+	while [ "$count_ipv6" -le $MAXCOUNT ]
+	do
+		array=( 1 2 3 4 5 6 7 8 9 0 a b c d e f )
+		ip64() {
+			echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+		}
+		echo $IP6:$(ip64):$(ip64):$(ip64):$(ip64) >> $WORKDIR/ipv6.txt
+		let "count_ipv6 += 1"
+	done
+}
+
+
+
 EOF
 }
-echo "installing apps"
-yum -y install gcc net-tools bsdtar zip make >/dev/null
 
-install_3proxy
+xoay_proxy
 
-echo "working folder = /home/proxy-installer"
-WORKDIR="/home/proxy-installer"
-WORKDATA="${WORKDIR}/data.txt"
-mkdir $WORKDIR && cd $_
-
-IP4=$(curl -4 -s icanhazip.com)
-IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
-
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
-
-FIRST_PORT=40000
-LAST_PORT=42000
-
-gen_data >$WORKDIR/data.txt
-gen_iptables >$WORKDIR/boot_iptables.sh
-gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-echo NM_CONTROLLED="no" >> /etc/sysconfig/network-scripts/ifcfg-${main_interface}
-chmod +x $WORKDIR/boot_*.sh /etc/rc.local
-
-gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-
-cat >>/etc/rc.local <<EOF
-#systemctl start NetworkManager.service
-# ifup ${main_interface}
-bash ${WORKDIR}/boot_iptables.sh
-bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
-/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
+xoay_proxy1() {
+var=/root/xoay1.txt
+    cat <<EOF >$var
+gen_3proxy_cfg() {
+	echo daemon
+	echo maxconn 3000
+	echo nserver 1.1.1.1
+	echo nserver [2606:4700:4700::1111]
+	echo nserver [2606:4700:4700::1001]
+	echo nserver [2001:4860:4860::8888]
+	echo nscache 65536
+	echo timeouts 1 5 30 60 180 1800 15 60
+	echo setgid 65535
+	echo setuid 65535
+	echo stacksize 6291456 
+	echo flush
+	# Loại bỏ phần xác thực user/pass
+	# echo authcache user 86400
+	# echo auth strong cache
+	# echo users $userpr:CL:$passpr
+	# echo allow $userpr
 EOF
+}
 
-bash /etc/rc.local
+xoay_proxy1
 
-gen_proxy_file_for_user
 
-upload_proxy
+xoay_proxy2() {
+cat > xoay2.txt << "EOF"
+
+	port=$START_PORT
+	while read ip; do
+		echo "proxy -6 -n -a -p$port -i$IP4 -e$ip"
+		((port+=1))
+	done < $WORKDIR/ipv6.txt
+	
+}
+gen_ifconfig() {
+	while read line; do    
+		echo "ifconfig $IFCFG inet6 add $line/64"
+	done < $WORKDIR/ipv6.txt
+}
+
+
+if [ "x$(id -u)" != 'x0' ]; then
+    echo 'Error: this script can only be executed by root'
+    exit 1
+fi
+
+service network restart
+
+ulimit -n 65535
+
+echo "Kiểm tra kết nối IPv6 ..."
+
+EOF
+}
+
+xoay_proxy2
+
+xoay_proxy3() {
+var=/root/xoay3.txt
+    cat <<EOF >$var
+if ip -6 route get 2606:4700:4700::1111 &> /dev/null
+then
+	IP4="$IP4"
+	IP6="$IP6"
+	main_interface="eth0"
+	
+    echo "[OKE]: Thành công"
+    	echo "IPV4: $IP4"
+	echo "IPV6: $IP6"
+	echo "Mạng chính: $main_interface"
+else
+    echo "[ERROR]:  thất bại!"
+	exit 1
+fi
+
+IFCFG="$main_interface" 
+WORKDIR="/root"
+START_PORT=$PORTPROXY
+MAXCOUNT=$XCOUNT
+EOF
+}
+
+xoay_proxy3
+
+xoay_proxy4() {
+cat > xoay4.txt << "EOF"
+echo "Đang tạo $MAXCOUNT IPV6 > ipv6.txt"
+gen_ipv6_64
+
+
+echo "Đang tạo IPV6 gen_ifconfig.sh"
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+bash $WORKDIR/boot_ifconfig.sh
+
+echo "3proxy Start"
+gen_3proxy_cfg > /etc/3proxy/3proxy.cfg
+killall 3proxy
+service 3proxy start
+
+echo "Đã Reset IP"
+EOF
+}
+
+xoay_proxy4
+
+
+#gen_sshkey() {
+#    cd /root
+#    sudo mv authorized_keys /root/.ssh
+#    chmod -R 700 /root
+#    chmod -R 600 /root/.ssh/authorized_keys
+#    sudo service sshd restart
+#}
+#echo "Tải khoá SSH key"
+#gen_sshkey
+#echo "Thiết lập SSH key hoàn tất vui lòng liên hệ Admin để lấy key đăng nhập"
+
+
+gen_xoay() {
+    cat xoay1.txt >> xoay.sh
+    cat xoay2.txt >> xoay.sh
+    cat xoay3.txt >> xoay.sh
+    cat xoay4.txt >> xoay.sh
+    chmod -R 777 /root/xoay.sh
+    rm -rf xoay1.txt
+    rm -rf xoay2.txt
+    rm -rf xoay3.txt
+    rm -rf xoay4.txt
+}
+gen_xoay
+echo "Tạo cấu hình xoay.sh"
+
+history -c
+
+echo "Cấu hình xoay hoàn tất"
