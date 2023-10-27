@@ -96,7 +96,7 @@ systemctl stop firewalld
 ulimit -n 65535
 yum -y install gcc net-tools bsdtar zip psmisc wget >/dev/null
 #mkdir -p ~/.ssh
-#wget https://bom.so/RN5P5s
+#wget https://onedrive.live.com/download?resid=8AB646317B939844%21109
 #
 echo "Kiểm tra kết nối IPv6 ..."
 
