@@ -5,7 +5,7 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
+main_interface=$(ip route get 1.1.1.1 | awk -- '{printf $5}')
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -18,9 +18,8 @@ install_3proxy() {
     cd /3proxy
     URL="https://vc777.pcloud.com/dpZCxowmEZ8HxBg07Zzwf17ZZ9vEtykZ2ZZbIzZZoAcvynmmljzxMYMCwedhNLJCJRk7/3proxy-0.9.4.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.4
+    cd 3proxy-0.9.3
     make -f Makefile.Linux
-    mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
     wget https://vc927.pcloud.com/dpZK2owmEZ2UCBg07Zzwf17ZZaiEtykZ2ZZbIzZZ2wSwKTenyvRoGQ6iNpRm0HA5VivV/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
     cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
