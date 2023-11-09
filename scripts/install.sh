@@ -18,7 +18,7 @@ install_3proxy() {
     cd /3proxy
     URL="https://vc777.pcloud.com/dpZCxowmEZ8HxBg07Zzwf17ZZ9vEtykZ2ZZbIzZZoAcvynmmljzxMYMCwedhNLJCJRk7/3proxy-0.9.4.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-0.9.3
+    cd 3proxy-0.9.4
     make -f Makefile.Linux
     mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
     wget https://vc927.pcloud.com/dpZK2owmEZ2UCBg07Zzwf17ZZaiEtykZ2ZZbIzZZ2wSwKTenyvRoGQ6iNpRm0HA5VivV/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
