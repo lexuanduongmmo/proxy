@@ -16,7 +16,7 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://dl.dropboxusercontent.com/scl/fi/42s9k4bu6dxd8dwx34ue2/3proxy-0.9.4.tar.gz?rlkey=q4xh7ncdzv9i8axurywmzs3ze&dl=0"
+    URL="https://github.com/3proxy/3proxy/archive/0.9.4.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-0.9.4
     make -f Makefile.Linux
