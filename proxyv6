@@ -135,3 +135,4 @@ gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.9.4
 
 echo "Starting Proxy"
+upload_proxy
