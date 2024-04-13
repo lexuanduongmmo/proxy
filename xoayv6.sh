@@ -110,9 +110,7 @@ WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 P4=$(curl -4 -s icanhazip.com)
-#Note Routed Subnet IP
-IP6=2a07:a8c0::74:4a27
-IP6=2a07:a8c1::74:4a27
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
