@@ -5,7 +5,7 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
+main_interface=$(ip route get 1.1.1.1 | awk -- '{printf $5}')
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -16,13 +16,13 @@ install_3proxy() {
     echo "installing 3proxy"
     mkdir -p /3proxy
     cd /3proxy
-    URL="https://github.com/3proxy/3proxy/archive/0.9.4.tar.gz"
+    URL="https://od.lk/d/MzZfNzYwNTE4OTBf/3proxy-0.9.4.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-0.9.4
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
-    wget https://raw.githubusercontent.com/lexuanduongmmo/proxy/main/3proxy.service-Centos8 --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
+    wget https://od.lk/d/MzZfNzYwNTE4OTRf/3proxy.service-Centos8.txt --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
     cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
     systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
@@ -37,6 +37,7 @@ install_3proxy() {
     sysctl -p
     systemctl stop firewalld
     systemctl disable firewalld
+    systemctl start firewalld
 
     cd $WORKDIR
 }
@@ -44,11 +45,11 @@ install_3proxy() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 2000
-nserver 1.1.1.1
-nserver 8.8.8.8
-nserver 2001:4860:4860::8888
-nserver 2606:4700:4700::1111
+maxconn 200
+nserver 45.90.30.237
+nserver 45.90.28.237
+nserver 2a07:a8c0::74:4a27
+nserver 2a07:a8c1::74:4a27
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
@@ -108,8 +109,11 @@ WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
-IP4=$(curl -4 -s icanhazip.com)
-IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+#Note Routed Subnet IP
+IP4=45.90.28.237
+IP4=45.90.30.237
+IP6=2a07:a8c0::74:4a27
+IP6=2a07:a8c1::74:4a27
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
