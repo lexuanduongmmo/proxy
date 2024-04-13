@@ -109,9 +109,8 @@ WORKDIR="/home/proxy-installer"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
+P4=$(curl -4 -s icanhazip.com)
 #Note Routed Subnet IP
-IP4=45.90.28.237
-IP4=45.90.30.237
 IP6=2a07:a8c0::74:4a27
 IP6=2a07:a8c1::74:4a27
 
