@@ -5,6 +5,7 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+main_interface=$(ip route get 8.8.8.8 | awk -- '{printf $5}')
 gen64() {
 	ip64() {
 		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -13,18 +14,19 @@ gen64() {
 }
 install_3proxy() {
     echo "installing 3proxy"
-    URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
+    mkdir -p /3proxy
+    cd /3proxy
+    URL="https://od.lk/d/MzZfNzYwNTE4OTBf/3proxy-0.9.4.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
-    cd 3proxy-3proxy-0.8.6
+    cd 3proxy-0.9.4
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    cp src/3proxy /usr/local/etc/3proxy/bin/
-    cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
-    chmod +x /etc/init.d/3proxy
-    chkconfig 3proxy on
-     systemctl link /usr/lib/systemd/system/3proxy.service
+    mv /3proxy/3proxy-0.9.4/bin/3proxy /usr/local/etc/3proxy/bin/
+    wget https://od.lk/d/MzZfNzYwNTE4OTRf/3proxy.service-Centos8.txt --output-document=/3proxy/3proxy-0.9.4/scripts/3proxy.service2
+    cp /3proxy/3proxy-0.9.4/scripts/3proxy.service2 /usr/lib/systemd/system/3proxy.service
+    systemctl link /usr/lib/systemd/system/3proxy.service
     systemctl daemon-reload
-#    systemctl enable 3proxy
+    systemctl enable 3proxy
     echo "* hard nofile 999999" >>  /etc/security/limits.conf
     echo "* soft nofile 999999" >>  /etc/security/limits.conf
     echo "net.ipv6.conf.$main_interface.proxy_ndp=1" >> /etc/sysctl.conf
@@ -44,14 +46,14 @@ gen_3proxy() {
 daemon
 maxconn 2000
 nserver 1.1.1.1
-nserver 8.8.4.4
+nserver 8.8.8.8
 nserver 2001:4860:4860::8888
-nserver 2001:4860:4860::8844
+nserver 2606:4700:4700::1111
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
-stacksize 6291456 
+stacksize 6291456
 flush
 auth strong
 
@@ -70,17 +72,6 @@ $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
 
-upload_proxy() {
-    cd $WORKDIR
-    local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -F "file=@proxy.zip" https://file.io)
-
-    echo "Proxy is ready! Format IP:PORT:LOGIN:PASS"
-    echo "Download zip archive from: ${URL}"
-    echo "Password: ${PASS}"
-
-}
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "$(random)/$(random)/$IP4/$port/$(gen64 $IP6)"
@@ -136,5 +127,6 @@ EOF
 bash /etc/rc.local
 
 gen_proxy_file_for_user
+rm -rf /root/3proxy-3proxy-0.9.4
 
-upload_proxy
+echo "Starting Proxy"
