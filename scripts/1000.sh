@@ -61,7 +61,6 @@ allow * * google.com,*.google.com,*.gstatic.com
 allow * * tiktok.com,*.tiktok.com
 deny *
 proxy
-flush
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
