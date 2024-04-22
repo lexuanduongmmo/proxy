@@ -55,12 +55,13 @@ setgid 65535
 setuid 65535
 stacksize 6291456
 flush
+
 auth strong
-allow * * facebook.com,*.facebook.com
+allow * * facebook.com,*.facebook.com,*.fbcdn.net
 allow * * google.com,*.google.com,*.gstatic.com
-allow * * tiktok.com,*.tiktok.com
-deny *
-proxy
+allow * * tiktok.com,*.tiktok.com,*.tiktokcdn.com,*.tiktokv.com
+deny  *
+proxy *
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
