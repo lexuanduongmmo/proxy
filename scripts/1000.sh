@@ -121,7 +121,7 @@ cat >>/etc/rc.local <<EOF
 # ifup ${main_interface}
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 65535
+ulimit -n 200001
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg &
 EOF
 
