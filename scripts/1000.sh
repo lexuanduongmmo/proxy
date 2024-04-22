@@ -61,7 +61,8 @@ allow * * facebook.com,*.facebook.com,*.fbcdn.net
 allow * * google.com,*.google.com,*.gstatic.com
 allow * * tiktok.com,*.tiktok.com,*.tiktokcdn.com,*.tiktokv.com
 deny  *
-proxy *
+proxy
+flush
 
 users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
 
